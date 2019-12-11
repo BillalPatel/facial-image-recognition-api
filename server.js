@@ -1,7 +1,13 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 
 const app = express();
+app.use(bodyParser.json());
+
 const port = 5000;
+
+app.listen(port, () => console.log(`Express server started on port ${port}`));
+
 const db = {
     users: [
         {
@@ -21,14 +27,20 @@ const db = {
     ]
 }
 
-app.listen(port, () => console.log(`Express server started on port ${port}`));
-
 app.get('/', (req, res) => {
-    res.send('landing');
+    res.send('Landing page');
 })
 
 app.post('/signin', (req, res) => {
-    res.json('post');
+    if (req.body.email === db.users[0].email && req.body.password === db.users[0].password) {
+        res.json('Successfully signed in');
+    } else {
+        res.status(400).json('Could not sign in');
+    }
+})
+
+app.post('/register', (req, res) => {
+    
 })
 
 // app.get('/', (req, res) => res.send('Hello World!'))
