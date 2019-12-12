@@ -1,5 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const shortid = require('shortid');
+const bcrypt = require('bcrypt');
 
 const app = express();
 app.use(bodyParser.json());
@@ -28,7 +30,6 @@ const db = {
 }
 
 app.get('/', (req, res) => {
-    console.log(db.users);
     res.send(db.users);
 })
 
@@ -57,12 +58,15 @@ app.post('/signin', (req, res) => {
 
 app.post('/register', (req, res) => {
     const { name, email, password } = req.body;
-    db.users.push({
-        id: 120,
-        name: name,
-        email: email,
-        password: password,
-        joined: new Date()
-    })
+
+    bcrypt.hash(password, 10, function(err, hash) {
+        db.users.push({
+            id: shortid.generate(),
+            name: name,
+            email: email,
+            password: hash,
+            joined: new Date()
+        })
+    });
     res.status(200).json('User registered successfully');
 })

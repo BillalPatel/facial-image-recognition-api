@@ -19,8 +19,10 @@
   },
   "homepage": "https://github.com/BillalPatel/facial-image-recognition-api#readme",
   "dependencies": {
+    "bcrypt": "^3.0.7",
     "body-parser": "^1.19.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "shortid": "^2.2.15"
   },
   "devDependencies": {
     "nodemon": "^2.0.1"
