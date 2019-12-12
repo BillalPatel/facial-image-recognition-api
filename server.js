@@ -2,9 +2,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const shortid = require('shortid');
 const bcrypt = require('bcrypt');
+const cors = require('cors');
 
 const app = express();
 app.use(bodyParser.json());
+app.use(cors());
 
 const port = 5000;
 
