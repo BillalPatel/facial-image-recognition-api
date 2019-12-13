@@ -2,7 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const knex = require('knex');
-const shortid = require('shortid');
 const bcrypt = require('bcrypt');
 
 const app = express();
@@ -24,29 +23,6 @@ const database = knex({
 
 database.select()
 
-const db = {
-    users: [
-        {
-            id: 1,
-            name: 'Bill',
-            email: '1',
-            password: '1',
-            joined: new Date().getDate
-        },
-        {
-            id: 2,
-            name: 'Bob',
-            email: 'bob@bob.com',
-            password: 'password2',
-            joined: new Date().getDate
-        }
-    ]
-}
-
-app.get('/', (req, res) => {
-    res.send(db.users);
-})
-
 app.get('/users', (req, res) => {
     res.send(db.users);
 })
@@ -66,33 +42,50 @@ app.get('/profile/:email', (req, res) => {
 })
 
 app.post('/signin', (req, res) => {
-    const {email, password} = req.body;
-    // bcrypt.compare(password, hash, function(err, res) {
-        if (email === db.users[0].email && password === db.users[0].password) {
-            res.json('Successfully signed in');
+    database('login_information')
+    .where('email', '=', 'const')
+    .then(data => {
+        const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
+        
+        if (isValid === true) {
+            return database('registered_users')
+            .where('email', '=', 'const')
+            .then(user => {
+                res.json(user[0])
+            })
+            .catch(err => res.status(400).json('Unable to get user'))
         } else {
-            res.status(400).json('Could not sign in');
-        }  
-    // })
+            res.status(400).json('Could not sign in')
+        }
+        })
+    .catch(err => res.status(400).json('Could not sign in this time'))
 })
 
 app.post('/register', (req, res) => {
     const { name, email, password } = req.body;
-    // bcrypt.hash(password, 10, function(err, hash) {
-        database('registered_users')
-        .returning('*')
-        .insert({
-            name: name,
-            email: email,
-            joined: new Date()
+    const hashedPassword = bcrypt.hashSync(password, 10)
+    
+    database.transaction(trans => {
+        trans.insert({
+            hash: hashedPassword,
+            email: email
         })
-        // .then(user => {
-        //     user.json(user[0]);
-        // })
+        .into('login_information')
+        .returning('email')
+        .then(loginEmail => {
+            return trans('registered_users')
+            .returning('*')
+            .insert({
+                name: name,
+                email: loginEmail[0],
+                joined: new Date()
+            })
+        })
+        .then(trans.commit)
         .then(response => {
             res.json('User registered successfully');
-            // res.json(response);
         })
-        .catch(err => res.status(400).json('Invalid details submitted'))
-    // });
+        .catch(trans.rollback)
+    })
+    .catch(err => res.status(400).json('Invalid details submitted'))
 })
