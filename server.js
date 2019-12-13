@@ -38,27 +38,27 @@ app.get('/profile/:email', (req, res) => {
         found = true;
         return res.status(200).json(user[0].name);
     })
-    .catch(err => res.status(404).json('User not found'));
+    .catch(() => res.status(404).json('User not found'));
 })
 
 app.post('/signin', (req, res) => {
     database('login_information')
-    .where('email', '=', 'const')
+    .where('email', '=', req.body.email)
     .then(data => {
         const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
         
         if (isValid === true) {
             return database('registered_users')
-            .where('email', '=', 'const')
+            .where('email', '=', req.body.email)
             .then(user => {
                 res.json(user[0])
             })
-            .catch(err => res.status(400).json('Unable to get user'))
+            .catch(() => res.status(400).json('Unable to get user'))
         } else {
             res.status(400).json('Could not sign in')
         }
         })
-    .catch(err => res.status(400).json('Could not sign in this time'))
+    .catch(() => res.status(400).json('Could not sign in this time'))
 })
 
 app.post('/register', (req, res) => {
@@ -80,12 +80,16 @@ app.post('/register', (req, res) => {
                 email: loginEmail[0],
                 joined: new Date()
             })
+            .then(user => {
+                res.json(user[0]);
+            })
         })
         .then(trans.commit)
-        .then(response => {
+        .then(res => {
             res.json('User registered successfully');
         })
         .catch(trans.rollback)
+        .catch(() => res.status(400).json('Invalid details submitted'));
     })
-    .catch(err => res.status(400).json('Invalid details submitted'))
+    .catch(() => res.status(400).json('Invalid details submitted'));
 })
