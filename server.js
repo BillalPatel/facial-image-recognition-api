@@ -1,24 +1,36 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
+const knex = require('knex');
 const shortid = require('shortid');
 const bcrypt = require('bcrypt');
-const cors = require('cors');
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
 const port = 5000;
-
 app.listen(port, () => console.log(`Express server started on port ${port}`));
+
+const database = knex({
+    client: 'pg',
+    connection: {
+        host : '127.0.0.1',
+        user : 'billalp',
+        password : '',
+        database : 'facial-recognition-db'
+  }
+});
+
+database.select()
 
 const db = {
     users: [
         {
             id: 1,
             name: 'Bill',
-            email: 'bill@bill.com',
-            password: 'password1',
+            email: '1',
+            password: '1',
             joined: new Date().getDate
         },
         {
@@ -35,40 +47,52 @@ app.get('/', (req, res) => {
     res.send(db.users);
 })
 
-app.get('/profile/:id', (req, res, next) => {
-    const {id} = req.params;
-    let found = false;
+app.get('/users', (req, res) => {
+    res.send(db.users);
+})
 
-    db.users.forEach(user => {
-        if (user.id.toString() === id) {
-            found = true;
-            return res.json(user);        
-        }        
+app.get('/profile/:email', (req, res) => {
+    const {email} = req.params;
+
+    database.select('*')
+    .from('registered_users').where({
+        email: email
     })
-    if (!found) {
-        return res.status(404).json('User not found');
-    }
+    .then(user => {
+        found = true;
+        return res.status(200).json(user[0].name);
+    })
+    .catch(err => res.status(404).json('User not found'));
 })
 
 app.post('/signin', (req, res) => {
-    if (req.body.email === db.users[0].email && req.body.password === db.users[0].password) {
-        res.json('Successfully signed in');
-    } else {
-        res.status(400).json('Could not sign in');
-    }
+    const {email, password} = req.body;
+    // bcrypt.compare(password, hash, function(err, res) {
+        if (email === db.users[0].email && password === db.users[0].password) {
+            res.json('Successfully signed in');
+        } else {
+            res.status(400).json('Could not sign in');
+        }  
+    // })
 })
 
 app.post('/register', (req, res) => {
     const { name, email, password } = req.body;
-
-    bcrypt.hash(password, 10, function(err, hash) {
-        db.users.push({
-            id: shortid.generate(),
+    // bcrypt.hash(password, 10, function(err, hash) {
+        database('registered_users')
+        .returning('*')
+        .insert({
             name: name,
             email: email,
-            password: hash,
             joined: new Date()
         })
-    });
-    res.status(200).json('User registered successfully');
+        // .then(user => {
+        //     user.json(user[0]);
+        // })
+        .then(response => {
+            res.json('User registered successfully');
+            // res.json(response);
+        })
+        .catch(err => res.status(400).json('Invalid details submitted'))
+    // });
 })
