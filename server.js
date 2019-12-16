@@ -41,6 +41,12 @@ app.get('/profile/:email', (req, res) => {
 })
 
 app.post('/signin', (req, res) => {
+    const { email, password } = req.body;
+
+    if (!name || !email || !password) {
+        return res.status(400).json('Form incomplete');
+    }
+    
     database('login_information')
     .where('email', '=', req.body.email)
     .then(data => {
