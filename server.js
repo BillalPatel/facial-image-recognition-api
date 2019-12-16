@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const Clarifai = require('clarifai');
 const cors = require('cors');
 const knex = require('knex');
 const bcrypt = require('bcrypt');
@@ -43,7 +44,7 @@ app.get('/profile/:email', (req, res) => {
 app.post('/signin', (req, res) => {
     const { email, password } = req.body;
 
-    if (!name || !email || !password) {
+    if (!email || !password) {
         return res.status(400).json('Form incomplete');
     }
     
@@ -100,4 +101,16 @@ app.post('/register', (req, res) => {
         .catch(() => res.status(400).json('Invalid details submitted'));
     })
     .catch(() => res.status(400).json('Invalid details submitted'));
+})
+
+const clarifaiApp = new Clarifai.App({
+    apiKey: 'd1cf986c507b4100aa06b7fec7935329'
+})
+
+app.post('/analyseImage', (req, res) => {
+    clarifaiApp.models.predict(Clarifai.DEMOGRAPHICS_MODEL, req.body.input)
+    .then(data => {
+        res.json(data);
+    })
+    .catch(err => res.status(400).json('Image API failed'));
 })
