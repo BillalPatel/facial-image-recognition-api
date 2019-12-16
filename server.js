@@ -63,6 +63,10 @@ app.post('/register', (req, res) => {
     const { name, email, password } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10)
     
+    if (!name || !email || !password) {
+        return res.status(400).json('Form incomplete');
+    }
+
     database.transaction(trans => {
         trans.insert({
             hash: hashedPassword,
