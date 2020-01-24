@@ -22,11 +22,7 @@ const database = knex({
   }
 });
 
-database.select()
-
-app.get('/users', (req, res) => {
-    res.send(db.users);
-})
+database.select();
 
 app.get('/profile/:email', (req, res) => {
     const {email} = req.params;
@@ -39,7 +35,7 @@ app.get('/profile/:email', (req, res) => {
         return res.status(200).json(user[0].name);
     })
     .catch(() => res.status(404).json('User not found'));
-})
+});
 
 app.post('/signin', (req, res) => {
     const { email, password } = req.body;
@@ -64,7 +60,7 @@ app.post('/signin', (req, res) => {
         }
         })
     .catch(() => res.status(400).json('Could not sign in on this occasion'))
-})
+});
 
 app.post('/register', (req, res) => {
     const { name, email, password } = req.body;
@@ -101,11 +97,11 @@ app.post('/register', (req, res) => {
         .catch(() => res.status(400).json('Invalid details submitted'));
     })
     .catch(() => res.status(400).json('Invalid details submitted'));
-})
+});
 
 const clarifaiApp = new Clarifai.App({
     apiKey: 'd1cf986c507b4100aa06b7fec7935329'
-})
+});
 
 app.post('/analyseImage', (req, res) => {
     clarifaiApp.models.predict(Clarifai.DEMOGRAPHICS_MODEL, req.body.input)
@@ -113,4 +109,4 @@ app.post('/analyseImage', (req, res) => {
         res.json(data);
     })
     .catch(err => res.status(400).json('Image API failed'));
-})
+});
