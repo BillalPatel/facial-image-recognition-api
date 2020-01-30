@@ -1,4 +1,4 @@
-# facial-image-recognition-api
+# Facial Image Recognition
 
 Provides the backend API in NodeJS/Express for a facial recognition application. Frontend can be found [here]https://github.com/BillalPatel/facial-image-recognition-web)
 
