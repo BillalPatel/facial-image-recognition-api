@@ -15,58 +15,83 @@ const pg = require('pg');
 const conString = 'postgres://cwsjnmgo:BhIrq134KifPB_SCa20W5orrjbtZZ_rd@rogue.db.elephantsql.com:5432/cwsjnmgo'
 const database = new pg.Client(conString);
 
-app.get('/profile/:email', (req, res) => {
-    database.connect(async (err) => {
-        if(err) {
-          return console.error('could not connect to postgres', err);
-        }
-        const { email } = req.params;
-
-        queryObject = {
-            text: 'SELECT * FROM registered_users WHERE email = $1',
-            values: [email]
-        };
-  
-        await database.query(queryObject, async () => {
-            if (err) {
-                res.status(404).json('User not found');
-            }
-            res.status(200).json(user[0].name);
-            await database.end();
-        });
-    });
-});
-
-app.post('/signin', (req, res) => {
+app.post('/signin', async (req, res) => {
+    // database.connect(async (error, results) => {
+    await database.connect();
+    //     if (error) {
+    //       return console.error('could not connect to database', error);
+    //     }
     const { email, password } = req.body;
 
     if (!email || !password) {
         return res.status(400).json('Form incomplete');
     }
+
+    queryObject = {
+        text: 'SELECT * FROM registered_users WHERE email = $1',
+        // values: [email]
+        values: ['billal@gmail.com']
+    };
     
-    database.query('SELECT * FROM login_information WHERE email = billal@test.com')
-    //  req.body.email)
-      .then(data => {
-          console.log('HELLO2');
-        const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
-        if (isValid === true) {
-            return database('registered_users')
-            .where('email', '=', req.body.email)
-            .then(user => {
-                res.status(200).json(user[0])
-            })
-            .catch(() => res.status(400).json('Unable to get user'))
+    await database.query(queryObject, async (error, results) => {
+        if (error) {
+            res.status(400).json('Invalid details submitted.')
         } else {
-            res.status(400).json('Could not sign in');
+            console.log('oijjfojofi', results.rows[0]);
+            res.status(200).json(results.rows[0]);
+    //         // const isValid = bcrypt.compareSync(req.body.password, results[0].hash)
+    //         // results.password);
+
+    //         // if (isValid === true) {
+    //             console.log('trueeee');
+    //             //         return database('registered_users')
+    //             //         .where('email', '=', req.body.email)
+    //             //         .then(user => {
+    //             //             res.status(200).json(user[0])
+    //             //         })
+    //             //         .catch(() => res.status(400).json('Unable to get user'))
+    //             //     } else {
+    //             //         res.status(400).json('Could not sign in');
         }
-        })
-    .catch(() => res.status(400).json('Could not sign in on this occasion'))
+        // await database.end();
+    });
+        
+    //     })
+    // .catch(() => res.status(400).json('Could not sign in on this occasion'))
+});
+
+app.get('/profile/:email', async (req, res) => {
+    // await database.connect();
+    // (async (error, results) => {
+        // if (error) {
+        //   return console.error('could not connect to database', error);
+        // }
+        const { email } = req.params;
+
+        queryObject = {
+            text: 'SELECT * FROM registered_users WHERE email = $1',
+            // values: [email]
+            values: ['billal@gmail.com']
+        };
+  
+        await database.query(queryObject, async (error, results) => {
+            if (error) {
+                res.status(404).json('User not found');
+            } else {
+                // console.log(results[0])
+                res.status(200).json(results.rows[0].name);
+                // await console.log('resultsresultsresults', results.rows[0]);
+            // res.status(200).json(results.name);
+            }
+            await database.end();
+        });
+    // });
 });
 
 app.post('/register', async (req, res) => {
-    database.connect(async (err) => {
-      if(err) {
-        return console.error('could not connect to postgres', err);
+    database.connect(async (error, results) => {
+      if (error) {
+        return console.error('could not connect to database', error);
       }
 
         const { name, email, password } = req.body;
@@ -81,8 +106,8 @@ app.post('/register', async (req, res) => {
             values: [name, email, hashedPassword, new Date()]
         };
 
-        await database.query(queryObject, async () => {
-            if (err) {
+        await database.query(queryObject, async (error, results) => {
+            if (error) {
                 res.status(400).json('Invalid details submitted.')
             }
 
