@@ -1,8 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const Clarifai = require('clarifai');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const Clarifai = require('clarifai');
 
 const app = express();
 app.use(bodyParser.json());
@@ -16,13 +16,25 @@ const conString = 'postgres://cwsjnmgo:BhIrq134KifPB_SCa20W5orrjbtZZ_rd@rogue.db
 const database = new pg.Client(conString);
 
 app.get('/profile/:email', (req, res) => {
-    const { email } = req.params;
+    database.connect(async (err) => {
+        if(err) {
+          return console.error('could not connect to postgres', err);
+        }
+        const { email } = req.params;
 
-    database.query('SELECT * FROM registered_users WHERE email = billal@test.com')
-    .then(user => {
-        return res.status(200).json(user[0].name);
-    })
-    .catch(() => res.status(404).json('User not found'));
+        queryObject = {
+            text: 'SELECT * FROM registered_users WHERE email = $1',
+            values: [email]
+        };
+  
+        await database.query(queryObject, async () => {
+            if (err) {
+                res.status(404).json('User not found');
+            }
+            res.status(200).json(user[0].name);
+            await database.end();
+        });
+    });
 });
 
 app.post('/signin', (req, res) => {
@@ -65,8 +77,8 @@ app.post('/register', async (req, res) => {
         }
 
         queryObject = {
-            text: 'INSERT INTO registered_users(email, password, joined_date) VALUES($1, $2, $3) RETURNING *',
-            values: ['billal@gmail.com', hashedPassword, new Date()]
+            text: 'INSERT INTO registered_users(name, email, password, joined_date) VALUES($1, $2, $3, $4) RETURNING *',
+            values: [name, email, hashedPassword, new Date()]
         };
 
         await database.query(queryObject, async () => {
