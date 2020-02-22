@@ -2,7 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const Clarifai = require('clarifai');
 const cors = require('cors');
-// const knex = require('knex');
 const bcrypt = require('bcrypt');
 
 const app = express();
@@ -13,21 +12,8 @@ const port = 5000;
 app.listen(port, () => console.log(`Express server started on port ${port}`));
 
 const pg = require('pg');
-
 const conString = 'postgres://cwsjnmgo:BhIrq134KifPB_SCa20W5orrjbtZZ_rd@rogue.db.elephantsql.com:5432/cwsjnmgo'
-
 const database = new pg.Client(conString);
-database.connect(function(err) {
-  if(err) {
-    return console.error('could not connect to postgres', err);
-  }
-  database.query('SELECT NOW() AS "theTime"', function(err, result) {
-    if(err) {
-      return console.error('error running query', err);
-    }
-    database.end();
-  });
-});
 
 app.get('/profile/:email', (req, res) => {
     const { email } = req.params;
@@ -66,55 +52,32 @@ app.post('/signin', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-    const pg = require('pg');
-    const conString = 'postgres://cwsjnmgo:BhIrq134KifPB_SCa20W5orrjbtZZ_rd@rogue.db.elephantsql.com:5432/cwsjnmgo'
-    const database = new pg.Client(conString);
-    
-    database.connect(async function(err) {
+    database.connect(async (err) => {
       if(err) {
         return console.error('could not connect to postgres', err);
       }
 
-    //   await database.query('INSERT INTO login_records(email_address, password) VALUES(email_address, hashedPassword) RETURNING *')
-    //   database.query('SELECT NOW() AS "theTime"', function(err, result) {
-    //     if(err) {
-    //       return console.error('error running query', err);
-    //     }
-    //     console.log(result.rows[0].theTime);
-    //     // >> output: 2018-08-23T14:02:57.117Z
-    //     // database.end();
-    //   });
-    // });
+        const { name, email, password } = req.body;
+        const hashedPassword = bcrypt.hashSync(password, 10)
+        
+        if (!name || !email || !password) {
+            return res.status(400).json('Form incomplete');
+        }
 
+        queryObject = {
+            text: 'INSERT INTO registered_users(email, password, joined_date) VALUES($1, $2, $3) RETURNING *',
+            values: ['billal@gmail.com', hashedPassword, new Date()]
+        };
 
+        await database.query(queryObject, async () => {
+            if (err) {
+                res.status(400).json('Invalid details submitted.')
+            }
 
-    const { name, email, password } = req.body;
-    const hashedPassword = bcrypt.hashSync(password, 10)
-    
-    if (!name || !email || !password) {
-        return res.status(400).json('Form incomplete');
-    }
-    const text = 'INSERT INTO registered_users(email, password) VALUES($1, $2) RETURNING *'
-    const values = ['billal@gmail.com', hashedPassword]
-    console.log('hashedPassword', hashedPassword);
-
-
-    await database.query(text, values)
-        .then(response => {
-            // console.log('loginEmailssss', res.rows[0])
-                // joined: new Date()
-            // res.status(201).json('User registered successfully')
-            // console.log(response)
-        })
-
-        // res.status(201).json('User registered successfully')
-        // .catch(trans.rollback)
-        // .catch(() => res.status(400).json('Credentials are not in correct format'))
-    .catch((err) => 
-        console.log(err),
-        res.status(400).json('Invalid details submitted.'));
+            res.status(201).json('User registered successfully');
+            await database.end();
+        });
     });
-    res.status(200).json('User registered successfully')
 });
 
 const clarifaiApp = new Clarifai.App({
