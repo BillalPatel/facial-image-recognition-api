@@ -26,31 +26,28 @@ app.listen(port, () => console.log(`Express server started on port ${port}`));
 var pg = require('pg');
 
 var conString = 'postgres://cwsjnmgo:BhIrq134KifPB_SCa20W5orrjbtZZ_rd@rogue.db.elephantsql.com:5432/cwsjnmgo'
-var client = new pg.Client(conString);
-client.connect(function(err) {
+// var client = new pg.Client(conString);
+var database = new pg.Client(conString);
+database.connect(function(err) {
   if(err) {
     return console.error('could not connect to postgres', err);
   }
-  client.query('SELECT NOW() AS "theTime"', function(err, result) {
+  database.query('SELECT NOW() AS "theTime"', function(err, result) {
     if(err) {
       return console.error('error running query', err);
     }
     console.log(result.rows[0].theTime);
     // >> output: 2018-08-23T14:02:57.117Z
-    client.end();
+    database.end();
   });
 });
 
-
-
-
-
-database.select();
+database.query('SELECT');
 
 app.get('/profile/:email', (req, res) => {
     const {email} = req.params;
 
-    database.select('*')
+    database.query('SELECT')
     .from('registered_users')
     .where('email', '=', email)
     .returning('name')
@@ -92,7 +89,7 @@ app.post('/register', (req, res) => {
     if (!name || !email || !password) {
         return res.status(400).json('Form incomplete');
     }
-    console.log(name, email, password);
+    
     database.transaction(trans => {
         trans.insert({
             hash: hashedPassword,
