@@ -12,22 +12,11 @@ app.use(cors());
 const port = 5000;
 app.listen(port, () => console.log(`Express server started on port ${port}`));
 
-// const database = knex({
-//     client: 'pg',
-//     connection: {
-//         host : '127.0.0.1',
-//         user : 'billalp',
-//         password : '',
-//         database : 'facial-recognition-db'
-//   }
-// });
+const pg = require('pg');
 
+const conString = 'postgres://cwsjnmgo:BhIrq134KifPB_SCa20W5orrjbtZZ_rd@rogue.db.elephantsql.com:5432/cwsjnmgo'
 
-var pg = require('pg');
-
-var conString = 'postgres://cwsjnmgo:BhIrq134KifPB_SCa20W5orrjbtZZ_rd@rogue.db.elephantsql.com:5432/cwsjnmgo'
-// var client = new pg.Client(conString);
-var database = new pg.Client(conString);
+const database = new pg.Client(conString);
 database.connect(function(err) {
   if(err) {
     return console.error('could not connect to postgres', err);
@@ -36,21 +25,14 @@ database.connect(function(err) {
     if(err) {
       return console.error('error running query', err);
     }
-    console.log(result.rows[0].theTime);
-    // >> output: 2018-08-23T14:02:57.117Z
     database.end();
   });
 });
 
-database.query('SELECT');
-
 app.get('/profile/:email', (req, res) => {
-    const {email} = req.params;
+    const { email } = req.params;
 
-    database.query('SELECT')
-    .from('registered_users')
-    .where('email', '=', email)
-    .returning('name')
+    database.query('SELECT * FROM registered_users WHERE email = billal@test.com')
     .then(user => {
         return res.status(200).json(user[0].name);
     })
@@ -64,9 +46,10 @@ app.post('/signin', (req, res) => {
         return res.status(400).json('Form incomplete');
     }
     
-    database('login_information')
-      .where('email', '=', req.body.email)
+    database.query('SELECT * FROM login_information WHERE email = billal@test.com')
+    //  req.body.email)
       .then(data => {
+          console.log('HELLO2');
         const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
         if (isValid === true) {
             return database('registered_users')
@@ -82,43 +65,53 @@ app.post('/signin', (req, res) => {
     .catch(() => res.status(400).json('Could not sign in on this occasion'))
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
+    const pg = require('pg');
+    const conString = 'postgres://cwsjnmgo:BhIrq134KifPB_SCa20W5orrjbtZZ_rd@rogue.db.elephantsql.com:5432/cwsjnmgo'
+    const database = new pg.Client(conString);
+    
+    database.connect(async function(err) {
+      if(err) {
+        return console.error('could not connect to postgres', err);
+      }
+
+    //   await database.query('INSERT INTO login_records(email_address, password) VALUES(email_address, hashedPassword) RETURNING *')
+    //   database.query('SELECT NOW() AS "theTime"', function(err, result) {
+    //     if(err) {
+    //       return console.error('error running query', err);
+    //     }
+    //     console.log(result.rows[0].theTime);
+    //     // >> output: 2018-08-23T14:02:57.117Z
+    //     // database.end();
+    //   });
+    // });
+
+
+
     const { name, email, password } = req.body;
     const hashedPassword = bcrypt.hashSync(password, 10)
     
     if (!name || !email || !password) {
         return res.status(400).json('Form incomplete');
     }
-    
-    database.transaction(trans => {
-        trans.insert({
-            hash: hashedPassword,
-            email: email
-        })
-        .into('login_information')
-        .returning('email')
-        .then(loginEmail => {
-            return trans('registered_users')
-            .returning('*')
-            .insert(
-                console.log('11'),{
-                name: name,
-                email: loginEmail[0],
-                joined: new Date()
-            })
-            .then(user => {
-                res.json(user[0]);
-                console.log('1');
-            })
-        })
-        .then(trans.commit)
+    const text = 'INSERT INTO registered_users(email, password) VALUES($1, $2) RETURNING *'
+    const values = ['billal@gmail.com', hashedPassword]
+    console.log('hashedPassword', hashedPassword);
+
+
+    await database.query(text, values)
         .then(res => {
-            res.status(200).json('User registered successfully');
+            // console.log('loginEmailssss', res.rows[0])
+                // joined: new Date()
+            res.status(201).json('User registered successfully')
+            console.log('hi2')
         })
-        .catch(trans.rollback)
-        .catch(() => res.status(400).json('Credentials are not in correct format'));
-    })
-    .catch(() => res.status(400).json('Invalid details submitted.'));
+        // .catch(trans.rollback)
+        // .catch(() => res.status(400).json('Credentials are not in correct format'))
+    .catch((err) => 
+        console.log(err),
+        res.status(400).json('Invalid details submitted.'));
+    });
 });
 
 const clarifaiApp = new Clarifai.App({
