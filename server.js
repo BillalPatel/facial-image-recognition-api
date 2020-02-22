@@ -100,18 +100,21 @@ app.post('/register', async (req, res) => {
 
 
     await database.query(text, values)
-        .then(res => {
+        .then(response => {
             // console.log('loginEmailssss', res.rows[0])
                 // joined: new Date()
-            res.status(201).json('User registered successfully')
-            console.log('hi2')
+            // res.status(201).json('User registered successfully')
+            // console.log(response)
         })
+
+        // res.status(201).json('User registered successfully')
         // .catch(trans.rollback)
         // .catch(() => res.status(400).json('Credentials are not in correct format'))
     .catch((err) => 
         console.log(err),
         res.status(400).json('Invalid details submitted.'));
     });
+    res.status(200).json('User registered successfully')
 });
 
 const clarifaiApp = new Clarifai.App({
