@@ -76,7 +76,7 @@ app.post('/register', async (req, res) => {
         values: [name, email, hashedPassword, new Date()]
     };
 
-    database.query(queryObject, async (error, results) => {
+    await database.query(queryObject, async (error, results) => {
         if (error) {
             res.status(400).json('Invalid details submitted.')
         }
@@ -90,8 +90,8 @@ const clarifaiApp = new Clarifai.App({
     apiKey: 'd1cf986c507b4100aa06b7fec7935329'
 });
 
-app.post('/analyseImage', (req, res) => {
-    clarifaiApp.models.predict(Clarifai.DEMOGRAPHICS_MODEL, req.body.input)
+app.post('/analyseImage', async (req, res) => {
+    await clarifaiApp.models.predict(Clarifai.DEMOGRAPHICS_MODEL, req.body.input)
     .then(data => {
         res.json(data);
     })
