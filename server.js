@@ -51,7 +51,7 @@ app.get('/profile/:email', async (req, res) => {
         values: [email]
     };
 
-    database.query(queryObject, async (error, results) => {
+    await database.query(queryObject, async (error, results) => {
         if (error) {
             res.status(404).json('User not found');
         } else {
