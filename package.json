@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/BillalPatel/facial-image-recognition-api#readme",
   "dependencies": {
-    "bcrypt": "^3.0.7",
+    "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
     "clarifai": "^2.9.1",
     "cors": "^2.8.5",
